@@ -743,3 +743,15 @@ heal = function(){
     setText("Johnny B has joined the party.");
   }
 };
+
+// ===== SHOP FIX OVERRIDE =====
+
+shop = function(){
+  setText(getShopFlavor ? getShopFlavor() : "Danica: buy something.");
+
+  setButtons([
+    {text:"Buy Taffy (10 CR)", action:()=>buy("taffy")},
+    {text:"Sell Items", action:sellMenu},
+    {text:"Back", action:town}
+  ]);
+};
