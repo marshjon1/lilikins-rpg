@@ -600,7 +600,7 @@ function gainXP(amount){
 function winBattle(){
   if(!enemy) return;
   player.gold += enemy.reward;
-  gainXP(enemy.xp);
+  gainXP(25 * enemy.xp);
 
   if(enemy.boss){
     player.flags.bossBeaten = true;
