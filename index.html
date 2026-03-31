@@ -1,34 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Lilikins and the Purple Menace</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lilikins and the Purple Menace</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="game">
+    <h1>Lilikins and the Purple Menace</h1>
+    <div id="stats"></div>
 
-<div id="game">
+    <div id="image-container">
+      <img id="scene-image" src="images/portrait_pixel.png" alt="scene art">
+      <div id="image-caption"></div>
+    </div>
 
-  <h1>Lilikins and the Purple Menace</h1>
-
-  <!-- STATS -->
-  <div id="stats"></div>
-
-  <!-- IMAGE PANEL (for photos later) -->
-  <div id="image-container" class="hidden">
-    <img id="scene-image" src="" alt="Scene Image">
-    <div id="image-caption"></div>
-  </div>
-
-  <!-- TEXT -->
-  <div id="text"></div>
-
-  <!-- BUTTONS -->
-  <div id="buttons"></div>
-
-</div>
-
-<script src="script.js"></script>
-
+    <div id="text"></div>
+    <div id="buttons"></div>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>

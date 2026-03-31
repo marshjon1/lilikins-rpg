@@ -1,74 +1,76 @@
+
 body {
-  background: #111;
-  color: #fff;
-  font-family: monospace;
-  text-align: center;
+  background: linear-gradient(180deg, #111, #191919);
+  color: #fff;
+  font-family: monospace;
+  text-align: center;
+  margin: 0;
+  padding: 18px;
 }
-
 #game {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
-  background: #222;
-  border-radius: 12px;
+  max-width: 960px;
+  margin: auto;
+  padding: 20px;
+  background: #222;
+  border-radius: 14px;
+  box-shadow: 0 0 18px rgba(0,0,0,.35);
 }
-
+h1 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
 #stats {
-  margin-bottom: 15px;
-  padding: 10px;
-  background: #1a1a1a;
-  border-radius: 8px;
+  margin-bottom: 14px;
+  padding: 10px;
+  background: #171717;
+  border-radius: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
-
-#text {
-  min-height: 120px;
-  padding: 15px;
-  background: #181818;
-  border-radius: 8px;
-  white-space: pre-wrap;
-  text-align: left;
-  margin-bottom: 15px;
-}
-
-#buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-button {
-  margin: 6px;
-  padding: 10px 16px;
-  background: #444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #666;
-}
-
-/* IMAGE SYSTEM */
-
 #image-container {
-  margin-bottom: 15px;
+  margin-bottom: 14px;
+  padding: 12px;
+  background: #171717;
+  border-radius: 10px;
 }
-
 #scene-image {
-  max-width: 100%;
-  max-height: 300px;
-  border-radius: 8px;
-  background: #000;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #0e0e0e;
 }
-
 #image-caption {
-  margin-top: 6px;
-  font-size: 0.9em;
-  color: #bbb;
+  margin-top: 8px;
+  color: #bfbfbf;
+  font-size: 0.95em;
 }
-
-.hidden {
-  display: none;
+#text {
+  min-height: 140px;
+  padding: 16px;
+  background: #181818;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  text-align: left;
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
+#buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+button {
+  margin: 0;
+  padding: 10px 16px;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: monospace;
+}
+button:hover {
+  background: #666;
 }

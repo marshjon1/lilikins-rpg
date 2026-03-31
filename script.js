@@ -1,757 +1,653 @@
-// V6 SCRIPT (Part 1+2 combined for zip delivery)
 
-let player = {
-  hp:100,maxHp:100,attack:10,gold:25,xp:0,level:1,
-  inventory:[],specials:[],party:["Lilikins"],deliverances:0
+const player = {
+  name: "Lilikins",
+  hp: 100,
+  maxHp: 100,
+  attack: 10,
+  gold: 25,
+  xp: 0,
+  level: 1,
+  inventory: [],
+  specials: [],
+  party: ["Lilikins"],
+  deliverances: 0,
+  johnnyUnlocked: false,
+  flags: {
+    ruinsUnlocked: false,
+    finalUnlocked: false,
+    jakeRecruited: false,
+    lukeRecruited: false,
+    brooklynRecruited: false,
+    bellaRecruited: false,
+    girlPowerUnlocked: false,
+    bossBeaten: false
+  }
 };
 
-let unlockedZones={forest:true,ruins:false,final:false};
-let enemy=null;
+let enemy = null;
+let currentZone = "town";
 
-const elena = [
-"OKAY LILI LOCK IN 😆",
-"STRATEGIC PANIC MODE",
-"DON'T DIE PLEASE",
-"YOU GOT THIS PROBABLY",
-"THIS IS FINE (IT IS NOT)"
-];
-
-const battleIntro = [
-"This feels illegal.",
-"You hear boss music.",
-"This was a mistake.",
-"Violence time.",
-"You regret everything."
-];
-
-const victory = [
-"That worked??",
-"Victory achieved.",
-"You survived somehow.",
-"We take those.",
-"Clean enough."
-];
-
-function r(a){return a[Math.floor(Math.random()*a.length)]}
-
-function update(){
-document.getElementById("stats").innerText=
-`HP:${player.hp}/${player.maxHp} ATK:${player.attack} LVL:${player.level} CR:${player.gold}`;
-}
-
-function setText(t){document.getElementById("text").innerText=t;}
-
-function setButtons(b){
-let c=document.getElementById("buttons");c.innerHTML="";
-b.forEach(x=>{
-let e=document.createElement("button");
-e.innerText=x.text;
-e.onclick=x.action;
-c.appendChild(e);
-});
-}
-
-function start(){update();town();}
-
-function town(){
-setText("Elena: "+r(elena));
-setButtons([
-{text:"Explore",action:exploreMenu},
-{text:"Shop",action:shop},
-{text:"Church",action:church}
-]);
-}
-
-function exploreMenu(){
-setText("Choose location");
-setButtons([
-{text:"Forest",action:()=>explore("forest")},
-{text:"Ruins",action:()=>explore("ruins")},
-{text:"Whole Nuts",action:()=>explore("final")},
-{text:"Back",action:town}
-]);
-}
-
-function explore(z){
-if(!unlockedZones[z]){setText("Elena: nope.");return;}
-if(Math.random()<0.75){battle(z);}else{loot();}
-}
-
-function battle(z){
-enemy={
-name:z==="forest"?"Goblin":"Menace",
-hp:z==="forest"?30:60,
-attack:z==="forest"?5:10,
-reward:10
+const imageMap = {
+  portrait: "images/portrait_pixel.png",
+  reaction: "images/reaction_sticker.png",
+  boss: "images/boss_wholenuts.png",
+  ending: "images/ending_comic.png",
+  wholeNuts: "images/wholenuts_bg.png"
 };
-setText(r(battleIntro)+" A "+enemy.name+" appears!");
-menu();
-}
 
-function menu(){
-setButtons([
-{text:"Attack",action:atk},
-{text:"Run",action:town}
-]);
-}
+const textBank = {
+  elenaTown: [
+    "OKAY LILI LOCK IN 😆",
+    "STRATEGIC PANIC MODE, BABY.",
+    "DON'T DIE PLEASE. IT WOULD BE BAD FOR THE BRAND.",
+    "YOU GOT THIS PROBABLY.",
+    "THIS IS FINE (IT IS NOT FINE).",
+    "YOU JUST GOT BACK FROM TOKYO AND NOW YOU GOTTA FIGHT MONSTERS. DISRESPECTFUL.",
+    "GRAPHIC ARTIST HANDS. BASS PLAYER SOUL. CHAOS APPOINTMENT SCHEDULED.",
+    "QUEEN OF THE BASS, RELUCTANT HERO BY DEFAULT.",
+    "I BELIEVE IN YOU WITH MY WHOLE LITTLE GREMLIN HEART.",
+    "IF SOMETHING ACTS UGLY, WE HIT IT WITH ARTISTIC INTENTION.",
+    "YOU ARE BEAUTIFUL, DEDICATED, AND ONE BAD ENCOUNTER AWAY FROM THROWING SOMEBODY.",
+    "MAIN CHARACTER ENERGY DETECTED. SLIGHTLY ANNOYED MAIN CHARACTER ENERGY, BUT STILL."
+  ],
+  battleIntro: [
+    "This feels illegal. A {enemy} appears!",
+    "You hear boss music. A {enemy} rolls up!",
+    "Violence time. A {enemy} enters the area!",
+    "This was a mistake. A {enemy} arrives!",
+    "You regret everything. A {enemy} appears!",
+    "WHY DOES THIS EXIST? It's a {enemy}.",
+    "That thing has bad manners and a worse face. A {enemy} appears!",
+    "Something ugly with opinions just showed up: {enemy}.",
+    "The universe made a mistake and named it {enemy}.",
+    "A rude little nightmare stomps in: {enemy}."
+  ],
+  victory: [
+    "That worked??",
+    "Victory achieved.",
+    "You survived somehow.",
+    "We take those.",
+    "Clean enough.",
+    "THE ENEMY HAS BEEN REMOVED FROM THE CHAT.",
+    "That thing got introduced to consequences.",
+    "Messy, loud, effective. I support it.",
+    "The problem is gone and I am choosing to call that elegant.",
+    "One more monster down. The legend keeps growing."
+  ],
+  loot: [
+    "You found {amount} CR in a place that absolutely should not contain currency.",
+    "Warm candied raisins again. The economy remains cursed. +{amount} CR.",
+    "A suspicious little pile of value appears at your feet. +{amount} CR.",
+    "You shake down the scenery and get paid for it. +{amount} CR.",
+    "Pocket lint, bad vibes, and candied raisins. Jackpot. +{amount} CR."
+  ],
+  shop: [
+    "Danica: Baby, if it sparkles and causes problems, it probably works.",
+    "Danica: I stocked healing, gear, and choices I refuse to explain.",
+    "Danica: Every hero needs snacks and at least one questionable weapon.",
+    "Danica: We are not asking why the candied raisins are hot right now.",
+    "Danica: Sometimes I feel like I'm in a video game and it freaks me out."
+  ],
+  blessingGood: [
+    "The blessing lands clean. Love that for us.",
+    "You feel stronger in a way that seems medically unexplainable.",
+    "That one actually hit. Big blessing energy.",
+    "Your stats just got touched by favor."
+  ],
+  blessingBad: [
+    "That did not feel like a blessing. That felt like feedback.",
+    "Spiritually? That was a miss.",
+    "The blessing looked at you and chose violence.",
+    "Well... that backfired with confidence."
+  ],
+  wholeNuts: [
+    "The old Whole Nuts sign flickers like it remembers better days.",
+    "Sugar dust hangs in the air with deeply haunted energy.",
+    "Broken candy displays lean like tired soldiers after a weird war.",
+    "Purple webbing clings to everything like a hostile redesign.",
+    "Whole Nuts stands in ruins, creepy and somehow still kind of funny."
+  ],
+  ending: [
+    "The lights shift. The chaos finally settles.",
+    "For one second, nobody jokes.",
+    "The room gives way to a stage and a quiet kind of truth."
+  ]
+};
 
-function atk(){
-enemy.hp-=player.attack;
-if(enemy.hp<=0)return win();
-player.hp-=enemy.attack;
-if(player.hp<=0)return lose();
-update();
-setText("Trade hits.");
-}
+const itemDB = {
+  strawberryTaffy: {name:"Strawberry Taffy", type:"heal", value:15, price:10, sell:5, desc:"Classic healing taffy."},
+  blueRaspberryTaffy: {name:"Blue Raspberry Taffy", type:"heal", value:22, price:15, sell:8, desc:"Aggressively blue and weirdly effective."},
+  mysteryTaffy: {name:"Mystery Taffy", type:"mystery", value:0, price:24, sell:12, desc:"Could heal. Could bully you."},
+  churchCoffee: {name:"Church Coffee of Speed", type:"buff", value:2, price:18, sell:9, desc:"A little haste in a paper cup."},
+  sparklyKittenRifle: {name:"Sparkly Kitten Rifle", type:"gear", value:3, price:32, sell:16, desc:"No bullets. Just aura."},
+  staffOfBabiesTears: {name:"Staff of Babies' Tears", type:"gear", value:5, price:40, sell:20, desc:"Deeply concerning. Very effective."},
+  candiedRaisinPouch: {name:"Candied Raisin Pouch", type:"gold", value:15, price:20, sell:10, desc:"Open for instant CR."}
+};
 
-function win(){
-player.gold+=enemy.reward;
-player.xp+=10;
+let shopStock = ["strawberryTaffy", "blueRaspberryTaffy", "mysteryTaffy", "churchCoffee", "sparklyKittenRifle", "staffOfBabiesTears", "candiedRaisinPouch"];
 
-if(player.xp>=player.level*20){
-player.xp=0;
-player.level++;
-player.attack+=2;
-player.maxHp+=10;
-
-if(player.level>=6)unlockedZones.ruins=true;
-if(player.level>=10)unlockedZones.final=true;
-
-setText("LEVEL UP!");
-}else{
-setText(r(victory));
-}
-
-update();
-town();
-}
-
-function lose(){
-setText("Elena: we died 😬");
-}
-
-function loot(){
-let g=Math.floor(Math.random()*10)+5;
-player.gold+=g;
-setText("Found "+g+" CR.");
-update();
-}
-
-function shop(){
-setText("Danica: I don't know why this works, just buy it.");
-setButtons([{text:"Back",action:town}]);
-}
-
-function church(){
-setText("Pastor Paul: You're covered.");
-setButtons([
-{text:"Deliverance",action:heal},
-{text:"Back",action:town}
-]);
-}
-
-function heal(){
-player.hp=player.maxHp;
-player.deliverances++;
-update();
-setText("Fully restored.");
-}
-
-start();
-
-// ===== V6 EXPANSION PACK 1 =====
-// Paste this entire file at the VERY BOTTOM of your current script.js
-
-elena.push(
-  "LILI BABY WE ARE ENTERING THE DANGER ZONE WITH STYLE AND QUESTIONABLE PLANNING.",
-  "I NEED BIG MAIN-CHARACTER ENERGY AND JUST A LITTLE BIT OF SPITE.",
-  "YOU JUST GOT BACK FROM TOKYO AND NOW YOU GOTTA FIGHT A GREMLIN. DISRESPECTFUL.",
-  "GRAPHIC ARTIST HANDS, BASS PLAYER SOUL, ABSOLUTE MENACE DESTINY.",
-  "IF THIS GETS ANY WEIRDER I AM GONNA START CHARGING NARRATION FEES.",
-  "YOU ARE BEAUTIFUL, DEDICATED, AND CURRENTLY ONE BAD ENCOUNTER AWAY FROM THROWING SOMEBODY.",
-  "LILI I NEED YOU TO LOCK IN LIKE YOU ARE FINISHING A DEADLINE ON PURE CAFFEINE AND FAITH.",
-  "THIS WHOLE ADVENTURE GOT LIP GLOSS, SPIRITUAL WARFARE, AND FAMILY CHAOS. THAT IS YOUR LANE.",
-  "YOU GOT THAT LOW-KEY TEMPER THING GOING ON. USE IT FOR GOOD, BABY.",
-  "I BELIEVE IN YOU WITH MY WHOLE CHAOTIC LITTLE HEART.",
-  "IF SOMETHING ACTS UGLY, WE HIT IT WITH ARTISTIC INTENTION.",
-  "THIS WORLD IS RUN BY BAD DECISIONS AND YOU ARE ABOUT TO OUTWORK ALL OF THEM.",
-  "YOU ARE NOT JUST THE CHOSEN ONE. YOU ARE THE RELUCTANTLY DRAFTED ONE.",
-  "SOMETIMES DESTINY IS JUST EVERYBODY ELSE BEING BUSY.",
-  "I NEED YOU WALKING LIKE YOU ALREADY WON AND THE MONSTERS JUST HAVEN'T FOUND OUT YET.",
-  "QUEEN OF THE BASS, PRINCESS OF CHAOS MANAGEMENT, PART-TIME MONSTER PROBLEM.",
-  "YOU GOT FAITH, TALENT, AND A FACE CARD THAT NEVER DECLINES. THE ENEMY IS COOKED.",
-  "IF ANYTHING SWINGS AT YOU, TAKE IT PERSONALLY IN A PRODUCTIVE WAY.",
-  "NO PRESSURE, BUT I ALREADY TOLD THE VIBES YOU WERE GONNA WIN.",
-  "THIS IS NOT A CALM DAY. THIS IS A LEGEND DAY."
-);
-
-battleIntro.push(
-  "A thing with ugly intentions enters the area.",
-  "A monster appears like it pays rent here. Disgusting.",
-  "This creature looks handcrafted by a committee of bad choices.",
-  "A problem in physical form just showed up.",
-  "The enemy arrives with a face full of bad manners.",
-  "Somebody let this thing out in public.",
-  "That creature looks like it should have been stopped in the concept stage.",
-  "A weird little beast appears and immediately becomes everybody's problem.",
-  "You found trouble. Trouble found you harder.",
-  "This enemy looks moist in a spiritually concerning way.",
-  "A rude little nightmare rolls up like it owns the road.",
-  "The air gets goofy. Enemy inbound.",
-  "That thing has villain posture and I hate it.",
-  "The battlefield just got uglier. Enemy sighted.",
-  "You hear chaos clomping closer. Here we go.",
-  "An enemy appears and it is embarrassingly confident.",
-  "That thing walked in like it had a plan. We cannot allow that.",
-  "The universe made a mistake and now it's your turn.",
-  "Something ugly with opinions just showed up.",
-  "This feels like a side quest that got way too serious."
-);
-
-victory.push(
-  "THE ENEMY HAS BEEN REMOVED FROM THE CHAT.",
-  "You solved that problem the old-fashioned way: aggressively.",
-  "That thing had a dream and you interrupted it permanently.",
-  "Messy, loud, effective. I support it.",
-  "That enemy got introduced to consequences.",
-  "You absolutely worked that creature over.",
-  "Okayyyy that was kinda nasty in the best way.",
-  "Victory with seasoning. Love that.",
-  "The problem is gone and I am choosing to call that elegant.",
-  "That enemy just got evicted from existence.",
-  "You kept your composure and then absolutely did not keep your mercy.",
-  "That was rude, direct, and honestly a little beautiful.",
-  "The creature folded like cheap laundry.",
-  "You handled business and made it look accidental.",
-  "That was one hundred percent a win and maybe seventy percent a plan.",
-  "Well look at you, collecting victories and emotional damage.",
-  "That enemy is now just atmosphere.",
-  "You flattened that problem into a teaching moment.",
-  "I saw what you did and I am impressed in all caps.",
-  "One more monster down. The legend keeps growing."
-);
-
-const lootLines = [
-  "You found some CR in a place that absolutely should not contain currency.",
-  "Warm candied raisins again. The economy remains cursed.",
-  "You shake down the scenery and get paid for it.",
-  "A little stash of CR was hiding nearby like it knew better.",
-  "Pocket lint, bad vibes, and candied raisins. Jackpot.",
-  "The universe coughed up some CR for your trouble.",
-  "A suspicious little pile of value appears at your feet.",
-  "You found CR under conditions that raise questions.",
-  "This bush had money in it. Sure. Fine.",
-  "A tiny treasure stash rewards your nosiness."
+const forestEnemies = [
+  {name:"Purple Goblin", hp:32, attack:5, reward:10, xp:10},
+  {name:"Suspicious Blob", hp:28, attack:6, reward:10, xp:10},
+  {name:"Cursed Intern", hp:34, attack:5, reward:12, xp:12},
+  {name:"Weird Dog", hp:30, attack:7, reward:11, xp:11}
 ];
 
-const shopFlavor = [
-  "Danica: Baby, if it sparkles and causes problems, it probably works.",
-  "Danica: I stocked healing, gear, and choices I refuse to explain.",
-  "Danica: I keep telling myself this is normal retail. It is not.",
-  "Danica: Every hero needs snacks and at least one questionable weapon.",
-  "Danica: I got practical items, funny items, and funny practical items.",
-  "Danica: If an item starts whispering, just set it down gentle.",
-  "Danica: We are not asking why the candied raisins are hot right now.",
-  "Danica: Buy what you need and maybe one thing that feels dangerous.",
-  "Danica: I love you, but if you try to haggle I will become difficult.",
-  "Danica: Sometimes I feel like I'm in a video game and it freaks me out."
+const ruinsEnemies = [
+  {name:"Web Knight", hp:56, attack:10, reward:20, xp:18},
+  {name:"Elite Menace", hp:60, attack:11, reward:22, xp:18},
+  {name:"Tax Beast", hp:62, attack:10, reward:21, xp:17},
+  {name:"Bad Decision Elemental", hp:70, attack:12, reward:24, xp:20}
 ];
 
-const blessingSuccess = [
-  "The blessing lands clean. Love that for us.",
-  "You feel stronger in a way that seems medically unexplainable.",
-  "Something just shifted and I am pretty sure it helped.",
-  "That one actually hit. Big blessing energy.",
-  "Your stats just got touched by favor."
+const finalEnemies = [
+  {name:"Spiderling of Retail Doom", hp:84, attack:14, reward:34, xp:28},
+  {name:"Sticky Floor Mimic", hp:88, attack:15, reward:36, xp:30},
+  {name:"Cursed Jawbreaker Warden", hp:95, attack:16, reward:38, xp:31}
 ];
 
-const blessingFail = [
-  "That did not feel like a blessing. That felt like feedback.",
-  "Oof. Spiritually, that was a miss.",
-  "The blessing looked at you and chose violence.",
-  "Something in the room got weird and now so are your stats.",
-  "Well... that backfired with confidence."
-];
+const finalBoss = {name:"The Purple Menace, Queen of Whole Nuts", hp:170, attack:18, reward:100, xp:100, boss:true};
 
-const wholeNutsFlavor = [
-  "The old Whole Nuts sign flickers like it remembers better days.",
-  "Sugar dust hangs in the air with deeply haunted energy.",
-  "Broken candy displays lean like tired soldiers after a weird war.",
-  "The floor looks sticky enough to have opinions.",
-  "Purple webbing clings to everything like a hostile redesign.",
-  "The place smells like old candy and terrible choices.",
-  "This used to be joy. Now it's a boss arena waiting room.",
-  "A shattered display case glints under bad lighting.",
-  "Everything here feels one laugh away from horror.",
-  "Whole Nuts stands in ruins, creepy and somehow still kind of funny."
-];
+function r(a){ return a[Math.floor(Math.random()*a.length)]; }
+function fmt(str, vars){ return Object.keys(vars).reduce((s,k)=>s.replaceAll("{"+k+"}", vars[k]), str); }
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
 
-const passOutLines = [
-  "Somebody just dropped and the vibes got way more serious.",
-  "OH NO SOMEBODY FOLDED. I DO NOT LIKE THIS.",
-  "That hit way too hard and now the squad looks different.",
-  "Somebody is down and my heart rate just got disrespectful.",
-  "NOPE. NOPE. GET BACK UP, BESTIE."
-];
-
-const secretEndingStarter = [
-  "The lights shift. The chaos finally settles.",
-  "For one second, nobody jokes.",
-  "The room gives way to a stage and a quiet kind of truth.",
-  "Johnny B counts it in. Lili lifts the bass.",
-  "This is bigger than the fight ever was."
-];
-
-// Optional helper functions you can call later if you want more flavor text.
-function getLootFlavor() {
-  return r(lootLines);
+function setImage(key, caption=""){
+  const img = document.getElementById("scene-image");
+  const cap = document.getElementById("image-caption");
+  img.src = imageMap[key] || imageMap.portrait;
+  cap.innerText = caption;
 }
 
-function getShopFlavor() {
-  return r(shopFlavor);
+function updateStats(){
+  document.getElementById("stats").innerText =
+`HP: ${player.hp}/${player.maxHp} | ATK: ${player.attack} | LVL: ${player.level} | XP: ${player.xp}/${player.level*24} | CR: ${player.gold}
+Party: ${player.party.join(", ")}
+Deliverances: ${player.deliverances}/21 | Ruins: ${player.flags.ruinsUnlocked ? "Unlocked" : "Locked"} | Whole Nuts: ${player.flags.finalUnlocked ? "Unlocked" : "Locked"}`;
 }
 
-function getBlessingSuccessFlavor() {
-  return r(blessingSuccess);
+function setText(t){ document.getElementById("text").innerText = t; }
+function setButtons(buttons){
+  const c = document.getElementById("buttons");
+  c.innerHTML = "";
+  buttons.forEach(b=>{
+    const e = document.createElement("button");
+    e.innerText = b.text;
+    e.onclick = b.action;
+    c.appendChild(e);
+  });
 }
-
-function getBlessingFailFlavor() {
-  return r(blessingFail);
-}
-
-function getWholeNutsFlavor() {
-  return r(wholeNutsFlavor);
-}
-
-function getPassOutFlavor() {
-  return r(passOutLines);
-}
-
-function getSecretEndingStarter() {
-  return r(secretEndingStarter);
-}
-
-
-// ===== V6 EXPANSION PACK 2 =====
-// PARTY + SPECIAL SYSTEMS
-
-// ===== SPECIAL SYSTEM =====
-player.specials = player.specials || [];
-
 function addSpecial(name, effect, value, text){
   if(!player.specials.find(s=>s.name===name)){
     player.specials.push({name, effect, value, text});
   }
 }
+function addItem(key){
+  const item = clone(itemDB[key]);
+  player.inventory.push(item);
+}
+function canFinal(){ return player.flags.finalUnlocked; }
 
-function specialMenu(){
-  if(player.specials.length===0){
-    setText("No specials yet.");
-    setButtons([{text:"Back",action:menu}]);
+function town(){
+  currentZone = "town";
+  setImage("portrait", "Retro pixel portrait stand-in");
+  let extra = [];
+  if(player.level >= 3 && !player.flags.jakeRecruited) extra.push("Elena: Jake is ready to join the squad.");
+  if(player.level >= 5 && !player.flags.lukeRecruited) extra.push("Elena: Luke is ready too. Youngest-sibling engineering arc.");
+  if(!player.johnnyUnlocked) extra.push(`Elena: ${Math.max(0,21-player.deliverances)} more deliverances until Johnny B hits like a drum fill.`);
+  setText("Elena: " + r(textBank.elenaTown) + (extra.length ? "\n\n" + extra.join("\n") : ""));
+  updateStats();
+  setButtons([
+    {text:"Explore", action: exploreMenu},
+    {text:"Shop", action: shopMenu},
+    {text:"Church", action: churchMenu},
+    {text:"Party", action: partyMenu},
+    {text:"Inventory", action: inventoryTown}
+  ]);
+}
+
+function exploreMenu(){
+  setImage("portrait", "Choose your zone");
+  setText("Choose a location.\n\nForest = early fights\nRuins = harder enemies\nWhole Nuts = final area");
+  setButtons([
+    {text:"Forest", action: ()=>explore("forest")},
+    {text:"Ruins", action: ()=>explore("ruins")},
+    {text:"Whole Nuts", action: ()=>explore("final")},
+    {text:"Boss Arena", action: bossArena},
+    {text:"Back", action: town}
+  ]);
+}
+
+function explore(zone){
+  if(zone === "ruins" && !player.flags.ruinsUnlocked){
+    setText("Elena: Nope. We are not built for that yet.");
+    setButtons([{text:"Back", action: exploreMenu}]);
     return;
   }
+  if(zone === "final" && !player.flags.finalUnlocked){
+    setText("Elena: Whole Nuts is still endgame energy. Not yet.");
+    setButtons([{text:"Back", action: exploreMenu}]);
+    return;
+  }
+  currentZone = zone;
+  if(zone === "final"){
+    setImage("wholeNuts", "Dark-funny fantasy stand-in for Whole Nuts");
+    setText(r(textBank.wholeNuts) + "\n\nElena: This place is creepy, sticky, and deeply rude.");
+    setButtons([
+      {text:"Keep Moving", action: ()=>battleRoll(zone)},
+      {text:"Back", action: exploreMenu}
+    ]);
+    return;
+  }
+  battleRoll(zone);
+}
 
+function battleRoll(zone){
+  if(Math.random() < 0.78) startBattle(zone);
+  else findLoot(zone);
+}
+
+function poolFor(zone){
+  if(zone==="forest") return forestEnemies;
+  if(zone==="ruins") return ruinsEnemies;
+  return finalEnemies;
+}
+
+function startBattle(zone){
+  enemy = clone(r(poolFor(zone)));
+  setImage("reaction", "Sticker-style reaction stand-in");
+  let text = fmt(r(textBank.battleIntro), {enemy: enemy.name});
+  if(player.hp <= Math.floor(player.maxHp * 0.35)) text += "\n\nElena: YOUR HEALTH BAR LOOKS DISRESPECTFUL.";
+  setText(text);
+  battleMenu();
+}
+
+function battleMenu(){
   setButtons([
-    ...player.specials.map((s,i)=>({
-      text:s.name,
-      action:()=>useSpecial(i)
-    })),
-    {text:"Back",action:menu}
+    {text:"Attack", action: attackEnemy},
+    {text:"Special", action: specialMenu},
+    {text:"Item", action: inventoryBattle},
+    {text:"Run", action: town}
+  ]);
+  updateStats();
+}
+
+function attackEnemy(){
+  enemy.hp -= player.attack;
+  if(enemy.hp <= 0){ winBattle(); return; }
+  enemyTurn(`You hit ${enemy.name} for ${player.attack}.`);
+}
+
+function enemyTurn(prefix){
+  player.hp -= enemy.attack;
+  if(player.hp <= 0){ loseBattle(); return; }
+  setText(prefix + `\n\n${enemy.name} hits back for ${enemy.attack}.`);
+  battleMenu();
+}
+
+function specialMenu(){
+  if(player.specials.length === 0){
+    setText("No specials yet.\n\nTry blessings, recruits, or shop gear.");
+    setButtons([{text:"Back", action: battleMenu}]);
+    return;
+  }
+  setButtons([
+    ...player.specials.map((s,i)=>({text:s.name, action:()=>useSpecial(i)})),
+    {text:"Back", action:battleMenu}
   ]);
 }
 
 function useSpecial(i){
-  let s = player.specials[i];
-  let txt = s.text || s.name;
+  const s = player.specials[i];
+  let text = s.text || s.name;
+  if(s.effect === "damage") enemy.hp -= s.value;
+  if(s.effect === "heal") player.hp = Math.min(player.maxHp, player.hp + s.value);
+  if(s.effect === "buff") player.attack += s.value;
 
-  if(s.effect==="damage"){
-    enemy.hp -= s.value;
-  }
-  if(s.effect==="heal"){
-    player.hp = Math.min(player.maxHp, player.hp + s.value);
-  }
-  if(s.effect==="buff"){
-    player.attack += s.value;
-  }
-
-  setText(txt);
-
-  if(enemy.hp<=0){ win(); return; }
-
-  player.hp -= enemy.attack;
-  update();
-}
-
-// ===== PARTY SYSTEM =====
-function party(){
-  let text = "Party:\n" + player.party.join(", ");
-
-  setButtons([
-    {text:"Recruit Jake",action:recruitJake},
-    {text:"Recruit Luke",action:recruitLuke},
-    {text:"Back",action:town}
-  ]);
-
-  setText(text);
-}
-
-function recruitJake(){
-  if(player.party.includes("Jake")){
-    setText("Jake already joined.");
+  if(enemy.hp <= 0){
+    setText(text);
+    winBattle();
     return;
   }
-  if(player.level < 3){
-    setText("Jake unlocks at level 3.");
-    return;
-  }
-
-  player.party.push("Jake");
-  player.attack += 2;
-
-  addSpecial(
-    "Protect",
-    "heal",
-    15,
-    "Jake steps in and steadies the team (+15 HP)"
-  );
-
-  update();
-  setText("Jake joined the party.");
+  enemyTurn(text);
 }
 
-function recruitLuke(){
-  if(player.party.includes("Luke")){
-    setText("Luke already joined.");
-    return;
-  }
-  if(player.level < 5){
-    setText("Luke unlocks at level 5.");
-    return;
-  }
-
-  player.party.push("Luke");
-  player.attack += 2;
-
-  addSpecial(
-    "Haste",
-    "buff",
-    3,
-    "Luke speeds things up (+3 ATK)"
-  );
-
-  update();
-  setText("Luke joined the party.");
-}
-
-// ===== GIRL POWER =====
-function checkGirlPower(){
-  if(
-    player.party.includes("Lilikins") &&
-    player.party.includes("Bella") &&
-    player.party.includes("Brooklyn")
-  ){
-    addSpecial(
-      "Girl Power Protocol",
-      "damage",
-      30,
-      "The squad goes OFF (30 damage)"
-    );
-  }
-}
-
-// ===== BLESSING SPECIALS =====
-function blessingReward(){
-  if(Math.random()<0.5){
-    addSpecial(
-      "Divine Chaos",
-      "damage",
-      25,
-      "Holy chaos blast (25 dmg)"
-    );
-  }else{
-    addSpecial(
-      "Favor Surge",
-      "heal",
-      20,
-      "You feel covered (+20 HP)"
-    );
-  }
-}
-
-
-// ===== V6 EXPANSION PACK 3 =====
-// BELLA + BROOKLYN + INVENTORY + SHOP SYSTEMS
-
-// ===== INVENTORY SYSTEM =====
-player.inventory = player.inventory || [];
-
-function addItem(name, type, value, text){
-  player.inventory.push({name, type, value, text});
-}
-
-function inventoryMenu(){
+function inventoryTown(){
   if(player.inventory.length === 0){
     setText("Inventory empty.");
-    setButtons([{text:"Back", action:menu}]);
+    setButtons([{text:"Back", action:town}]);
     return;
   }
-
   setButtons([
-    ...player.inventory.map((item,i)=>({
-      text:item.name,
-      action:()=>useItem(i)
-    })),
-    {text:"Back", action:menu}
-  ]);
-}
-
-function useItem(i){
-  let item = player.inventory[i];
-
-  if(item.type === "heal"){
-    player.hp = Math.min(player.maxHp, player.hp + item.value);
-  }
-  if(item.type === "buff"){
-    player.attack += item.value;
-  }
-  if(item.type === "gold"){
-    player.gold += item.value;
-  }
-
-  setText(item.text || (item.name + " used."));
-  player.inventory.splice(i,1);
-  update();
-}
-
-// ===== LOOT UPGRADE =====
-function loot(){
-  let g = Math.floor(Math.random()*10)+5;
-  player.gold += g;
-
-  if(Math.random() < 0.3){
-    addItem(
-      "Strange Taffy",
-      "heal",
-      20,
-      "You eat it. It works. Don't ask why (+20 HP)"
-    );
-  }
-
-  setText("Found "+g+" CR.");
-  update();
-}
-
-// ===== SHOP SYSTEM =====
-function shop(){
-  setText(getShopFlavor ? getShopFlavor() : "Danica: buy something.");
-  setButtons([
-    {text:"Buy Taffy (10)", action:()=>buy("taffy")},
-    {text:"Sell Items", action:sellMenu},
+    ...player.inventory.map((item,i)=>({text:item.name, action:()=>useItemTown(i)})),
     {text:"Back", action:town}
   ]);
+  setText("Inventory:\nChoose an item.");
 }
 
-function buy(type){
-  if(player.gold < 10){
-    setText("Not enough CR.");
+function inventoryBattle(){
+  if(player.inventory.length === 0){
+    setText("Inventory empty.");
+    setButtons([{text:"Back", action:battleMenu}]);
     return;
   }
-
-  player.gold -= 10;
-
-  if(type==="taffy"){
-    addItem(
-      "Taffy",
-      "heal",
-      15,
-      "Classic healing taffy (+15 HP)"
-    );
-  }
-
-  update();
-  setText("Purchased.");
+  setButtons([
+    ...player.inventory.map((item,i)=>({text:item.name, action:()=>useItemBattle(i)})),
+    {text:"Back", action:battleMenu}
+  ]);
+  setText("Choose an item to use.");
 }
 
-function sellMenu(){
+function resolveItem(item){
+  let text = `${item.name} used. `;
+  if(item.type === "heal"){
+    player.hp = Math.min(player.maxHp, player.hp + item.value);
+    text += `Recovered ${item.value} HP.`;
+  } else if(item.type === "buff"){
+    player.attack += item.value;
+    text += `ATK +${item.value}.`;
+  } else if(item.type === "gold"){
+    player.gold += item.value;
+    text += `Gained ${item.value} CR.`;
+  } else if(item.type === "gear"){
+    player.attack += item.value;
+    text += `Permanent ATK +${item.value}.`;
+  } else if(item.type === "mystery"){
+    if(Math.random() < 0.65){
+      player.hp = Math.min(player.maxHp, player.hp + 20);
+      text += "It behaved. +20 HP.";
+    } else {
+      player.hp = Math.max(1, player.hp - 10);
+      text += "It fought back. -10 HP.";
+    }
+  }
+  return text + `\n\n${item.desc}`;
+}
+
+function useItemTown(i){
+  const item = player.inventory.splice(i,1)[0];
+  setText(resolveItem(item));
+  updateStats();
+  setButtons([{text:"Back", action:town}]);
+}
+
+function useItemBattle(i){
+  const item = player.inventory.splice(i,1)[0];
+  const text = resolveItem(item);
+  updateStats();
+  if(enemy && enemy.hp > 0) enemyTurn(text);
+  else battleMenu();
+}
+
+function findLoot(zone){
+  const amount = zone==="forest" ? rand(6,14) : zone==="ruins" ? rand(12,22) : rand(18,30);
+  player.gold += amount;
+  let text = fmt(r(textBank.loot), {amount});
+  if(Math.random() < 0.3){
+    const key = r(["strawberryTaffy","blueRaspberryTaffy","churchCoffee","candiedRaisinPouch"]);
+    addItem(key);
+    text += `\n\nYou also found: ${itemDB[key].name}`;
+  }
+  setImage("reaction", "Sticker-style loot stand-in");
+  setText(text);
+  updateStats();
+  setButtons([{text:"Back", action: exploreMenu}]);
+}
+
+function shopMenu(){
+  setImage("reaction", "Sticker/cartoon style stand-in");
+  setText(r(textBank.shop));
+  setButtons([
+    {text:"Buy", action: shopBuy},
+    {text:"Sell", action: shopSell},
+    {text:"Back", action: town}
+  ]);
+}
+
+function shopBuy(){
+  setText("Buy something questionable but useful.");
+  setButtons([
+    ...shopStock.map((key, i)=>({text:`${itemDB[key].name} (${itemDB[key].price} CR)`, action:()=>buyItem(key)})),
+    {text:"Back", action: shopMenu}
+  ]);
+}
+
+function buyItem(key){
+  const item = itemDB[key];
+  if(player.gold < item.price){
+    setText("Danica: Baby, you do not have the CR for that.");
+    setButtons([{text:"Back", action: shopBuy}]);
+    return;
+  }
+  player.gold -= item.price;
+  player.inventory.push(clone(item));
+  updateStats();
+  setText(`Purchased: ${item.name}\n\n${item.desc}`);
+  setButtons([{text:"Back", action: shopBuy}]);
+}
+
+function shopSell(){
   if(player.inventory.length === 0){
     setText("Nothing to sell.");
+    setButtons([{text:"Back", action: shopMenu}]);
     return;
   }
-
+  setText("Pick an item to sell.");
   setButtons([
-    ...player.inventory.map((item,i)=>({
-      text:item.name + " (5 CR)",
-      action:()=>sellItem(i)
-    })),
-    {text:"Back", action:shop}
+    ...player.inventory.map((item,i)=>({text:`${item.name} (${item.sell} CR)`, action:()=>sellItem(i)})),
+    {text:"Back", action: shopMenu}
   ]);
 }
 
 function sellItem(i){
-  player.gold += 5;
-  player.inventory.splice(i,1);
-  update();
-  setText("Item sold.");
+  const item = player.inventory.splice(i,1)[0];
+  player.gold += item.sell;
+  updateStats();
+  setText(`Sold ${item.name} for ${item.sell} CR.`);
+  setButtons([{text:"Back", action: shopSell}]);
 }
 
-// ===== BELLA + BROOKLYN =====
-function recruitBrooklyn(){
-  if(player.party.includes("Brooklyn")){
-    setText("Brooklyn already joined.");
+function churchMenu(){
+  setImage("portrait", "Pastor/healer portrait stand-in");
+  setText("New Vintage Church\n\nHealing is Deliverance.\nBlessings stay blessings.");
+  setButtons([
+    {text:"Deliverance (Full Heal)", action: deliverance},
+    {text:"Modest Blessing (15 CR)", action: ()=>blessing("modest")},
+    {text:"Faith Blessing (35 CR)", action: ()=>blessing("faith")},
+    {text:"Unhinged Revival Blessing (60 CR)", action: ()=>blessing("unhinged")},
+    {text:"Back", action: town}
+  ]);
+}
+
+function deliverance(){
+  player.hp = player.maxHp;
+  player.deliverances += 1;
+  let text = "Pastor Paul: You're covered.\n\nFully restored.";
+  if(player.deliverances >= 21 && !player.johnnyUnlocked){
+    player.johnnyUnlocked = true;
+    player.party.push("Johnny B");
+    addSpecial("Johnny B Hype", "buff", 4, "Johnny B erupts like a live intro. ATK +4.");
+    text += "\n\nJohnny B joins the party with loud hype energy.";
+  }
+  updateStats();
+  setText(text);
+  setButtons([{text:"Back", action: churchMenu}]);
+}
+
+function blessing(tier){
+  const cfg = {
+    modest: {cost:15, chance:0.75, atk:2, hp:5},
+    faith: {cost:35, chance:0.68, atk:4, hp:10},
+    unhinged: {cost:60, chance:0.60, atk:7, hp:16}
+  }[tier];
+  if(player.gold < cfg.cost){
+    setText("Not enough CR.");
+    setButtons([{text:"Back", action: churchMenu}]);
     return;
   }
-
-  if(Math.random() < 0.7){
-    player.party.push("Brooklyn");
-    addSpecial(
-      "Shield Vibe",
-      "heal",
-      18,
-      "Brooklyn steadies the squad (+18 HP)"
-    );
-    setText("Brooklyn joined.");
-  }else{
-    setText("Brooklyn said nah for now.");
+  player.gold -= cfg.cost;
+  if(Math.random() < cfg.chance){
+    player.attack += cfg.atk;
+    player.maxHp += cfg.hp;
+    player.hp = Math.min(player.maxHp, player.hp + Math.floor(cfg.hp/2));
+    let text = r(textBank.blessingGood) + `\n\nATK +${cfg.atk}, Max HP +${cfg.hp}.`;
+    if(tier === "unhinged" && Math.random() < 0.55){
+      if(Math.random() < 0.5) addSpecial("Divine Chaos", "damage", 30, "Holy nonsense detonates for 30 damage.");
+      else addSpecial("Favor Surge", "heal", 22, "Favor lands. Recover 22 HP.");
+      text += "\n\nUnlocked a special.";
+    }
+    updateStats();
+    setText(text);
+  } else {
+    const mode = Math.random();
+    if(mode < 0.34){ player.hp = Math.max(1, player.hp - 10); setText(r(textBank.blessingBad) + "\n\nLost 10 HP."); }
+    else if(mode < 0.67){ player.gold = Math.max(0, player.gold - 10); setText(r(textBank.blessingBad) + "\n\nLost 10 CR."); }
+    else { player.attack = Math.max(1, player.attack - 2); setText(r(textBank.blessingBad) + "\n\nLost 2 ATK."); }
+    updateStats();
   }
+  setButtons([{text:"Back", action: churchMenu}]);
+}
 
-  update();
+function partyMenu(){
+  setImage("portrait", "Party portrait stand-in");
+  let text = "Party:\n- " + player.party.join("\n- ");
+  if(player.flags.girlPowerUnlocked) text += "\n\nGirl Power Protocol: ONLINE";
+  setText(text);
+  setButtons([
+    {text:"Recruit Jake", action: recruitJake},
+    {text:"Recruit Luke", action: recruitLuke},
+    {text:"Recruit Brooklyn", action: recruitBrooklyn},
+    {text:"Recruit Bella", action: recruitBella},
+    {text:"Back", action: town}
+  ]);
+}
+
+function recruitJake(){
+  if(player.flags.jakeRecruited){ setText("Jake already joined."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  if(player.level < 3){ setText("Jake unlocks at level 3."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  player.flags.jakeRecruited = true;
+  player.party.push("Jake");
+  player.attack += 2;
+  addSpecial("Protect", "heal", 15, "Jake steps in and steadies the team (+15 HP).");
+  updateStats();
+  setText("Jake joins with quiet big-brother energy.");
+  setButtons([{text:"Back", action: partyMenu}]);
+}
+
+function recruitLuke(){
+  if(player.flags.lukeRecruited){ setText("Luke already joined."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  if(player.level < 5){ setText("Luke unlocks at level 5."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  player.flags.lukeRecruited = true;
+  player.party.push("Luke");
+  player.attack += 2;
+  addSpecial("Haste", "buff", 3, "Luke speeds things up (+3 ATK).");
+  updateStats();
+  setText("Luke joins with youngest-sibling engineering energy.");
+  setButtons([{text:"Back", action: partyMenu}]);
+}
+
+function recruitBrooklyn(){
+  if(player.flags.brooklynRecruited){ setText("Brooklyn already joined."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  if(!player.flags.jakeRecruited){ setText("Jake needs to join first."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  if(Math.random() < 0.75){
+    player.flags.brooklynRecruited = true;
+    player.party.push("Brooklyn");
+    addSpecial("Shield Vibe", "heal", 18, "Brooklyn steadies the squad (+18 HP).");
+    setText("Brooklyn joins with chill confidence and wilderness calm.");
+  } else {
+    setText("Brooklyn says maybe later.");
+  }
   checkGirlPower();
+  updateStats();
+  setButtons([{text:"Back", action: partyMenu}]);
 }
 
 function recruitBella(){
-  if(player.party.includes("Bella")){
-    setText("Bella already joined.");
-    return;
-  }
-
-  if(Math.random() < 0.7){
+  if(player.flags.bellaRecruited){ setText("Bella already joined."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  if(!player.flags.lukeRecruited){ setText("Luke needs to join first."); setButtons([{text:"Back", action: partyMenu}]); return; }
+  if(Math.random() < 0.75){
+    player.flags.bellaRecruited = true;
     player.party.push("Bella");
-    addSpecial(
-      "Savage Focus",
-      "damage",
-      22,
-      "Bella locks in (22 damage)"
-    );
-    setText("Bella joined.");
-  }else{
-    setText("Bella just smiled and walked away.");
+    addSpecial("Savage Focus", "damage", 22, "Bella locks in and lands 22 damage.");
+    setText("Bella joins sweetly, which is less comforting than it sounds.");
+  } else {
+    setText("Bella just smiled and walked away. Ruthless.");
   }
-
-  update();
   checkGirlPower();
+  updateStats();
+  setButtons([{text:"Back", action: partyMenu}]);
 }
 
-// Extend party menu
-const oldParty = party;
-party = function(){
-  setButtons([
-    {text:"Recruit Jake",action:recruitJake},
-    {text:"Recruit Luke",action:recruitLuke},
-    {text:"Recruit Brooklyn",action:recruitBrooklyn},
-    {text:"Recruit Bella",action:recruitBella},
-    {text:"Back",action:town}
-  ]);
-
-  setText("Party:\n" + player.party.join(", "));
-};
-
-
-// ===== V6 EXPANSION PACK 4 (FINAL) =====
-// FINAL ZONE + BOSS + ENDING
-
-// ===== FINAL ZONE =====
-function exploreFinal(){
-  setText(getWholeNutsFlavor ? getWholeNutsFlavor() : "Whole Nuts is ruined...");
-  setButtons([
-    {text:"Go Deeper", action:startBoss},
-    {text:"Back", action:exploreMenu}
-  ]);
-}
-
-// Hook into explore
-const oldExplore = explore;
-explore = function(zone){
-  if(zone==="final"){
-    exploreFinal();
-    return;
+function checkGirlPower(){
+  if(!player.flags.girlPowerUnlocked && player.flags.brooklynRecruited && player.flags.bellaRecruited){
+    player.flags.girlPowerUnlocked = true;
+    addSpecial("Girl Power Protocol", "damage", 34, "Lili, Bella, and Brooklyn go OFF (34 damage).");
   }
-  oldExplore(zone);
-};
-
-// ===== BOSS =====
-function startBoss(){
-  enemy = {
-    name:"Purple Menace",
-    hp:120,
-    attack:15,
-    reward:50,
-    boss:true
-  };
-
-  setText("A massive purple spider descends. This is it.");
-  menu();
 }
 
-// ===== WIN OVERRIDE =====
-const oldWin = win;
-win = function(){
-  if(enemy && enemy.boss){
-    player.gold += enemy.reward;
-    setText("You defeated the Purple Menace.");
+function gainXP(amount){
+  player.xp += amount;
+  while(player.xp >= player.level * 24){
+    player.xp -= player.level * 24;
+    player.level += 1;
+    player.attack += 2;
+    player.maxHp += 10;
+    if(player.level >= 6) player.flags.ruinsUnlocked = true;
+    if(player.level >= 10) player.flags.finalUnlocked = true;
+  }
+}
 
-    setButtons([
-      {text:"Rescue Malachi", action:ending},
-    ]);
+function winBattle(){
+  if(!enemy) return;
+  player.gold += enemy.reward;
+  gainXP(enemy.xp);
+
+  if(enemy.boss){
+    player.flags.bossBeaten = true;
+    setImage("ending", "Comic-style ending stand-in");
+    let text = `${r(textBank.ending)}\n\nYou defeated the Purple Menace.\n\nMalachi is saved... kind of.\n\nBut it was never really about that.\n\nJohnny B hits the drums.\nLili picks up the bass.\n\nHappy 21st.\n\nI haven't always been able to be there the way I wanted, but I love you tons.`;
+    setText(text);
+    setButtons([{text:"Play Again", action: ()=>location.reload()}]);
+    enemy = null;
+    updateStats();
     return;
   }
 
-  oldWin();
-};
+  setText(r(textBank.victory) + `\n\n+${enemy.reward} CR, +${enemy.xp} XP.`);
+  enemy = null;
+  updateStats();
+  setButtons([{text:"Back to Town", action: town}]);
+}
 
-// ===== ENDING =====
-function ending(){
-  setText(
-`Malachi is saved... kind of.
+function loseBattle(){
+  setText("Elena: NOPE. We died.\n\nEverybody regroups and pretends that was strategic.");
+  player.hp = Math.max(1, Math.floor(player.maxHp * 0.6));
+  updateStats();
+  enemy = null;
+  setButtons([{text:"Back to Town", action: town}]);
+}
 
-But it was never really about that.
-
-The stage lights come up.
-
-Johnny B hits the drums.
-Lili picks up the bass.
-
-And for a moment,
-everything makes sense.
-
-Happy 21st.
-
-I love you tons.`
-  );
-
+function bossArena(){
+  if(!player.flags.finalUnlocked){
+    setText("Whole Nuts is not unlocked yet.");
+    setButtons([{text:"Back", action: exploreMenu}]);
+    return;
+  }
+  setImage("wholeNuts", "Whole Nuts final area stand-in");
+  setText(r(textBank.wholeNuts) + "\n\nElena: If you're going in, go in loud.");
   setButtons([
-    {text:"Play Again", action:()=>location.reload()}
+    {text:"Fight the Purple Menace", action: startBossFight},
+    {text:"Back", action: exploreMenu}
   ]);
 }
 
-// ===== SECRET ENDING HOOK =====
-const oldHeal = heal;
-heal = function(){
-  oldHeal();
+function startBossFight(){
+  enemy = clone(finalBoss);
+  setImage("boss", "Dark-funny fantasy boss stand-in");
+  setText("A massive purple spider descends.\n\nThis is it.\n\nMalachi is webbed up somewhere overhead.");
+  battleMenu();
+}
 
-  if(player.deliverances >= 21 && !player.party.includes("Johnny B")){
-    player.party.push("Johnny B");
-    setText("Johnny B has joined the party.");
-  }
-};
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-// ===== SHOP FIX OVERRIDE =====
-
-shop = function(){
-  setText(getShopFlavor ? getShopFlavor() : "Danica: buy something.");
-
-  setButtons([
-    {text:"Buy Taffy (10 CR)", action:()=>buy("taffy")},
-    {text:"Sell Items", action:sellMenu},
-    {text:"Back", action:town}
-  ]);
-};
+town();
