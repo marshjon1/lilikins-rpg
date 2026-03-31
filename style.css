@@ -33,19 +33,19 @@ image-container {
   background: #171717;
   border-radius: 10px;
 }
-#scene-image {
+scene-image {
   width: 100%;
   max-height: 320px;
   object-fit: contain;
   border-radius: 8px;
   background: #0e0e0e;
 }
-#image-caption {
+image-caption {
   margin-top: 8px;
   color: #bfbfbf;
   font-size: 0.95em;
 }
-#text {
+text {
   min-height: 140px;
   padding: 16px;
   background: #181818;
@@ -55,7 +55,7 @@ image-container {
   margin-bottom: 14px;
   line-height: 1.45;
 }
-#buttons {
+buttons {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
